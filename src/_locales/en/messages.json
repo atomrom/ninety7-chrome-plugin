@@ -1,0 +1,8 @@
+{
+  "extName":  {
+    "message": "Smart Personalized Digest"
+  },
+  "extDescription": {
+    "message": "This extension uploads browsing actions to the Ninety7 server which, based on the uploaded data, creates you a personalized digest."
+  }
+}
