@@ -1,6 +1,9 @@
 var currentUrl;
 var updatedTimestamp;
 
+var lockedStart;
+var lockedDuration = 0;
+
 chrome.tabs.query({
 	'active' : true,
 	'windowId' : chrome.windows.WINDOW_ID_CURRENT
@@ -30,13 +33,38 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 
 function startTimer(url) {
 	currentUrl = url;
-	updatedTimestamp = new Date().getTime();
+	updatedTimestamp = now();
+
+	lockedDuration = 0;
+}
+
+function now() {
+	return new Date().getTime();
 }
 
 function printTimeSpentOnPage() {
+	console.log("lockedDuration: ", lockedDuration);
+
 	if (updatedTimestamp != undefined) {
-		console.log("Time spent on page ", currentUrl, ": ", new Date()
-				.getTime()
-				- updatedTimestamp);
+		console.log("Time spent on page ", currentUrl, ": ", now()
+				- updatedTimestamp - lockedDuration);
 	}
 }
+
+chrome.idle.setDetectionInterval(15);
+// "active", "idle", or "locked"
+chrome.idle.onStateChanged.addListener(function callback(newState) {
+	if (newState != "active") {
+		lockedStart = now();
+	} else if (lockedStart > 0) {
+		lockedDuration += now() - lockedStart;
+	}
+
+	console.log(newState, lockedDuration);
+});
+
+chrome.browserAction.onClicked.addListener(function(tab) {
+	chrome.tabs.create({
+		"url" : "popup.html"
+	});
+});
