@@ -35,7 +35,7 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 });
 
 function startTimer(url) {
-	if (isProtocolTracked(url)) {
+	if (isTracked(url)) {
 		currentUrl = url;
 		updatedTimestamp = now();
 
@@ -47,7 +47,7 @@ function now() {
 	return new Date().getTime();
 }
 
-function isProtocolTracked(url) {
+function isTracked(url) {
 	if (url == undefined) {
 		return false;
 	}
@@ -55,17 +55,23 @@ function isProtocolTracked(url) {
 	protocol = $.url(url).attr('protocol');
 	console.log("protocol:", protocol);
 
-	return (protocol == "http" || protocol == "https" || protocol == "ftp" || protocol == "file");
+	host = $.url(url).attr('host');
+	console.log("host:", host);
+
+	return (protocol == "http" || protocol == "https" || protocol == "ftp")
+			&& ("1-dot-ninety7-service.appspot.com" != host);
 }
 
 function postToServerTimeSpentOnPage() {
-	if (isProtocolTracked(currentUrl)) {
+	if (isTracked(currentUrl)) {
 		console.log("lockedDuration: ", lockedDuration);
 
 		if (updatedTimestamp != undefined) {
 			visitDuration = now() - updatedTimestamp - lockedDuration;
 
 			console.log("Time spent on page ", currentUrl, ", ", visitDuration);
+			console.log("Title:", pageTitle);
+			console.log("Content:", pageContent);
 
 			$.post("http://1-dot-ninety7-service.appspot.com/collector", {
 				urlVisited : currentUrl,
