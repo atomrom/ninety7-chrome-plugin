@@ -25,7 +25,7 @@
   },
   "background": {
     "persistent": false,
-    "scripts": ["navigation_tracker.js"]
+    "scripts": ["navigation_tracker.js", "jquery.min.js", "purl.js"]
   },
   "content_scripts": [
     {      

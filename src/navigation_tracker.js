@@ -1,3 +1,6 @@
+var pageTitle;
+var pageContent;
+
 var currentUrl;
 var updatedTimestamp;
 
@@ -15,7 +18,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	console.log("url:", tab.url, tab.id);
 
 	if (tab.url != currentUrl) {
-		printTimeSpentOnPage();
+		postToServerTimeSpentOnPage();
 
 		startTimer(tab.url);
 	}
@@ -25,29 +28,54 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 	chrome.tabs.get(activeInfo.tabId, function(tab) {
 		console.log("activated:", activeInfo.tabId, tab.url);
 
-		printTimeSpentOnPage();
+		postToServerTimeSpentOnPage();
 
 		startTimer(tab.url);
 	});
 });
 
 function startTimer(url) {
-	currentUrl = url;
-	updatedTimestamp = now();
+	if (isProtocolTracked(url)) {
+		currentUrl = url;
+		updatedTimestamp = now();
 
-	lockedDuration = 0;
+		lockedDuration = 0;
+	}
 }
 
 function now() {
 	return new Date().getTime();
 }
 
-function printTimeSpentOnPage() {
-	console.log("lockedDuration: ", lockedDuration);
+function isProtocolTracked(url) {
+	if (url == undefined) {
+		return false;
+	}
 
-	if (updatedTimestamp != undefined) {
-		console.log("Time spent on page ", currentUrl, ": ", now()
-				- updatedTimestamp - lockedDuration);
+	protocol = $.url(url).attr('protocol');
+	console.log("protocol:", protocol);
+
+	return (protocol == "http" || protocol == "https" || protocol == "ftp" || protocol == "file");
+}
+
+function postToServerTimeSpentOnPage() {
+	if (isProtocolTracked(currentUrl)) {
+		console.log("lockedDuration: ", lockedDuration);
+
+		if (updatedTimestamp != undefined) {
+			visitDuration = now() - updatedTimestamp - lockedDuration;
+
+			console.log("Time spent on page ", currentUrl, ", ", visitDuration);
+
+			$.post("http://1-dot-ninety7-service.appspot.com/collector", {
+				urlVisited : currentUrl,
+				visitDuration : visitDuration,
+				title : pageTitle != undefined ? pageTitle : "",
+				content : pageContent != undefined ? pageContent : ""
+			}, function(data, status) {
+				console.log("Data: ", data, "\nStatus: ", status);
+			});
+		}
 	}
 }
 
@@ -67,4 +95,12 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 	chrome.tabs.create({
 		"url" : "popup.html"
 	});
+});
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+	console.log(sender.tab ? "from a content script:" + sender.tab.url
+			: "from the extension");
+
+	pageTitle = request.title;
+	pageContent = request.content;
 });
