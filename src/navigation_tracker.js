@@ -1,3 +1,5 @@
+var activeTabId;
+
 var pageTitle;
 var pageContent;
 
@@ -14,34 +16,36 @@ chrome.tabs.query({
 	// alert(tabs[0].url);
 });
 
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-	console.log("url:", tab.url, tab.id);
+chrome.webNavigation.onCompleted.addListener(function(details) {
+	if (details.frameId == 0) {
+		console.log("onCompleted-url:", details.url);
+		
+		if (currentUrl != details.url) {
+			postToServerTimeSpentOnPage();
+		}
 
-	postToServerTimeSpentOnPage();
-
-	chrome.tabs.get(tabId, function(tab) {
-		console.log("updated:", tabId, tab.url);
-
-		extractContent(tabId, tab.url);
-		startTimer(tab.url);
-	});
-	startTimer(tab.url);
-
+		if (activeTabId == details.tabId) {
+			extractContent(details.tabId, details.url);
+			startTimer(details.url);
+		}
+	}
 });
 
 chrome.tabs.onActivated.addListener(function(activeInfo) {
+	console.log("onActivated-url:", activeInfo.tabId, activeInfo.url);
+
 	postToServerTimeSpentOnPage();
 
 	chrome.tabs.get(activeInfo.tabId, function(tab) {
-		console.log("activated:", activeInfo.tabId, tab.url);
-
 		extractContent(activeInfo.tabId, tab.url);
 		startTimer(tab.url);
 	});
+
+	activeTabId = activeInfo.tabId;
 });
 
 function extractContent(tabId, url) {
-	if (isTracked(url)) {
+	 if (isTracked(url)) {
 		chrome.tabs.executeScript(tabId, {
 			file : "content_extractor.js"
 		});
@@ -95,10 +99,12 @@ function postToServerTimeSpentOnPage() {
 			}, function(data, status) {
 				console.log("Data: ", data, "\nStatus: ", status);
 
-				urlVisited = undefined;
+				currentUrl = undefined;
 				visitDuration = undefined;
 				title = undefined;
 				content = undefined;
+
+				lockedDuration = 0;
 			});
 		}
 	}
