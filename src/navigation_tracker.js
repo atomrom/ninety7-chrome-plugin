@@ -13,13 +13,14 @@ chrome.tabs.query({
 	'active' : true,
 	'windowId' : chrome.windows.WINDOW_ID_CURRENT
 }, function(tabs) {
-	// alert(tabs[0].url);
+	activeTabId = tabs[0].id;
+	console.log('activeTabId:', activeTabId);
 });
 
 chrome.webNavigation.onCompleted.addListener(function(details) {
 	if (details.frameId == 0) {
 		console.log("onCompleted-url:", details.url);
-		
+
 		if (currentUrl != details.url) {
 			postToServerTimeSpentOnPage();
 		}
@@ -45,7 +46,7 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 });
 
 function extractContent(tabId, url) {
-	 if (isTracked(url)) {
+	if (isTracked(url)) {
 		chrome.tabs.executeScript(tabId, {
 			file : "content_extractor.js"
 		});
