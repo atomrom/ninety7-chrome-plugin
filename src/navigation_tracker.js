@@ -98,15 +98,15 @@ function postToServerTimeSpentOnPage() {
 				title : pageTitle != undefined ? pageTitle : "",
 				content : pageContent != undefined ? pageContent : ""
 			}, function(data, status) {
-				console.log("Data: ", data, "\nStatus: ", status);
-
-				currentUrl = undefined;
-				visitDuration = undefined;
-				title = undefined;
-				content = undefined;
-
-				lockedDuration = 0;
+				console.log("Data: ", data, "\nStatus: ", status);				
 			});
+			
+			currentUrl = undefined;
+			visitDuration = undefined;
+			title = undefined;
+			content = undefined;
+
+			lockedDuration = 0;
 		}
 	}
 }
