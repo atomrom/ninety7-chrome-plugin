@@ -16,7 +16,9 @@
 
   "permissions": [ 
     "tabs",
-    "idle"
+    "idle",
+    "http://*/",
+    "https://*/"
   ],
   
   "browser_action": {
@@ -26,12 +28,6 @@
   "background": {
     "persistent": false,
     "scripts": ["navigation_tracker.js", "jquery.min.js", "purl.js"]
-  },
-  "content_scripts": [
-    {      
-      "matches": ["http://*/*", "https://*/*", "ftp://*/*"],
-      "js": ["content_extractor.js"]
-    }
-  ]
+  }
   
 }

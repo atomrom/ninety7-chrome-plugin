@@ -17,22 +17,36 @@ chrome.tabs.query({
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	console.log("url:", tab.url, tab.id);
 
-	if (tab.url != currentUrl) {
-		postToServerTimeSpentOnPage();
+	postToServerTimeSpentOnPage();
 
+	chrome.tabs.get(tabId, function(tab) {
+		console.log("updated:", tabId, tab.url);
+
+		extractContent(tabId, tab.url);
 		startTimer(tab.url);
-	}
+	});
+	startTimer(tab.url);
+
 });
 
 chrome.tabs.onActivated.addListener(function(activeInfo) {
+	postToServerTimeSpentOnPage();
+
 	chrome.tabs.get(activeInfo.tabId, function(tab) {
 		console.log("activated:", activeInfo.tabId, tab.url);
 
-		postToServerTimeSpentOnPage();
-
+		extractContent(activeInfo.tabId, tab.url);
 		startTimer(tab.url);
 	});
 });
+
+function extractContent(tabId, url) {
+	if (isTracked(url)) {
+		chrome.tabs.executeScript(tabId, {
+			file : "content_extractor.js"
+		});
+	}
+}
 
 function startTimer(url) {
 	if (isTracked(url)) {
@@ -58,7 +72,7 @@ function isTracked(url) {
 	host = $.url(url).attr('host');
 	console.log("host:", host);
 
-	return (protocol == "http" || protocol == "https" || protocol == "ftp")
+	return (protocol == "http")
 			&& ("1-dot-ninety7-service.appspot.com" != host);
 }
 
@@ -80,6 +94,11 @@ function postToServerTimeSpentOnPage() {
 				content : pageContent != undefined ? pageContent : ""
 			}, function(data, status) {
 				console.log("Data: ", data, "\nStatus: ", status);
+
+				urlVisited = undefined;
+				visitDuration = undefined;
+				title = undefined;
+				content = undefined;
 			});
 		}
 	}
