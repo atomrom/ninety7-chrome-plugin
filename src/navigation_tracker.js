@@ -3,11 +3,25 @@ var activeTabId;
 var pageTitle;
 var pageContent;
 
+var metaKeywords;
+var metaDescription;
+
 var currentUrl;
 var updatedTimestamp;
 
 var lockedStart;
 var lockedDuration = 0;
+
+function resetTrackingData() {
+	currentUrl = undefined;
+	visitDuration = undefined;
+	pageTitle = undefined;
+	pageContent = undefined;
+	metaKeywords = undefined;
+	metaDescription = undefined;
+
+	lockedDuration = 0;
+}
 
 chrome.tabs.query({
 	'active' : true,
@@ -48,7 +62,11 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 function extractContent(tabId, url) {
 	if (isTracked(url)) {
 		chrome.tabs.executeScript(tabId, {
-			file : "content_extractor.js"
+			file : "jquery.min.js"
+		}, function() {
+			chrome.tabs.executeScript(tabId, {
+				file : "content_extractor.js"
+			});
 		});
 	}
 }
@@ -90,23 +108,21 @@ function postToServerTimeSpentOnPage() {
 
 			console.log("Time spent on page ", currentUrl, ", ", visitDuration);
 			console.log("Title:", pageTitle);
-			console.log("Content:", pageContent);
+			console.log("Keywords:", metaKeywords);
+			console.log("Description:", metaDescription);
 
 			$.post("http://1-dot-ninety7-service.appspot.com/collector", {
 				urlVisited : currentUrl,
 				visitDuration : visitDuration,
 				title : pageTitle != undefined ? pageTitle : "",
-				content : pageContent != undefined ? pageContent : ""
+				content : pageContent != undefined ? pageContent : "",
+				metaKeywords : metaKeywords,
+				metaDescription : metaDescription
 			}, function(data, status) {
-				console.log("Data: ", data, "\nStatus: ", status);				
+				console.log("Data: ", data, "\nStatus: ", status);
 			});
-			
-			currentUrl = undefined;
-			visitDuration = undefined;
-			title = undefined;
-			content = undefined;
 
-			lockedDuration = 0;
+			resetTrackingData();
 		}
 	}
 }
@@ -135,4 +151,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 	pageTitle = request.title;
 	pageContent = request.content;
+	metaKeywords = request.meta_keywords;
+	metaDescription = request.meta_description;
+
+	console.log("Title:", pageTitle);
+	console.log("Keywords:", metaKeywords);
+	console.log("Description:", metaDescription);
 });
