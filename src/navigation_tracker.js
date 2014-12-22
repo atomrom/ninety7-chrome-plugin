@@ -103,7 +103,7 @@ function postToServerTimeSpentOnPage() {
 	if (isTracked(currentUrl)) {
 		console.log("lockedDuration: ", lockedDuration);
 
-		if (updatedTimestamp != undefined) {
+		if (updatedTimestamp != undefined && metaKeywords != undefined) {
 			visitDuration = now() - updatedTimestamp - lockedDuration;
 
 			console.log("Time spent on page ", currentUrl, ", ", visitDuration);
